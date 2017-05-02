@@ -2,7 +2,8 @@ import os
 import argparse
 import sys
 import pickle
-from Methods import ClassificationLabel, FeatureVector, Instance, Predictor, DecisionTree#, NaiveBayes, NeuralNetwork
+import math
+from Methods import ClassificationLabel, FeatureVector, Instance, Predictor, DecisionTree, NaiveBayes, NeuralNetwork
 
 def load_data(filename):
 	instances = []
@@ -61,7 +62,7 @@ def predict(predictor, instances):
 		results.append(label)
 		if (instance.getLabel() == label):
 			correct += 1.0
-		print instance.getLabel(), label
+		print(instance.getLabel(), label)
 	print correct, total_count, correct / total_count
 	return results
 
@@ -73,7 +74,7 @@ def check_args(args):
 		if not os.path.exists(args.model_file):
 			raise Exception("model file specified by --model-file does not exist.")
 
-def train(instances, algorithm):
+def train(instances, labels, algorithm):
 	"""
 	This is where you tell classify.py what algorithm to use for training
 	The actual code for training should be in the Predictor subclasses
@@ -82,9 +83,15 @@ def train(instances, algorithm):
 	if algorithm == "decision_tree":
 		predictor = DecisionTree()
 	"""
-	predictor = None # you want to change this depending on the algorithm you're using
 	if algorithm == "decision_tree":
 		predictor = DecisionTree()
+	elif algorithm == "naive_bayes":
+		predictor = NaiveBayes()
+	elif algorithm == "neural_network":
+		features = instances[0].length()
+		classes = len(labels)
+		shape = (features, math.ceil((features + classes)/2), classes)
+		predictor = NeuralNetwork(shape, labels)
 	predictor.train(instances)
 	return predictor
 
@@ -95,7 +102,7 @@ def main():
 		instances, labels = load_data(args.data)
 
 		# Train
-		predictor = train(instances, args.algorithm)
+		predictor = train(instances, labels, args.algorithm)
 		
 		try:
 			with open(args.model_file, 'wb') as writer:
