@@ -1,5 +1,7 @@
 from abc import ABCMeta, abstractmethod
 import math
+import numpy as np
+
 # abstract base class for defining labels
 class Label:
     __metaclass__ = ABCMeta
@@ -39,6 +41,10 @@ class FeatureVector:
     
     def length(self):
         return len(self.feature_vec.keys())
+
+    def arr(self):
+        return np.array([self.feature_vec[i] for i in range(self.length())])
+    
     
 class Instance:
     def __init__(self, feature_vector, label):
@@ -53,6 +59,7 @@ class Instance:
     
     def length(self):
         return self._feature_vector.length()
+
 # abstract base class for defining predictors
 class Predictor:
     __metaclass__ = ABCMeta
@@ -79,7 +86,7 @@ Remember that if you subclass the Predictor base class, you must
 include methods called train() and predict() in your subclasses
 """
 
-class DecisionTree():
+class DecisionTree(Predictor):
     
     def __init__(self):
         self.tree = {}
@@ -220,8 +227,114 @@ class DecisionTree():
             return None
         return self.test(vals[instance_val], instance)
     
-    
-    
-    
-    
-    
+
+class NaiveBayes(Predictor):
+
+    def __init__(self):
+        return
+
+
+class NeuralNetwork(Predictor):
+
+    def __init__(self, shape, classes):
+        # Layer info
+        self.layers = len(shape) - 1
+        self.shape = shape
+        self.classes = []
+        self.tprobs = []
+        self.targets = dict()  # maps class to target probabilities
+
+        # Generate desired output for each class
+        for index, c in enumerate(classes):
+            probs = np.ones(len(classes)) * 0.05
+            probs[index] = 0.95
+            self.targets[c] = index
+            self.tprobs.append(probs.T)
+            self.classes.append(c)
+
+        # Init run data
+        self.layerIn = []
+        self.layerOut = []
+
+        self.weights = []
+        np.random.seed(1) # Constant random seed makes testing deterministic
+
+        # Init small random weights
+        for (l1, l2) in zip(shape[:-1], shape[1:]):
+            self.weights.append(np.random.normal(scale = 0.1, size = (l2, l1+1))) # l1+1 for bias node
+
+
+    def target(self, instance):
+        return self.targets[instance.getLabel()]
+
+    def train(self, instances):
+
+        deltas = []
+        errors = []
+        features = self.shape[0]
+
+        maxIter = 1000
+        minErr = 0.01
+        learningRate = 1
+
+        for itr in range(maxIter):
+
+            for instance in instances:
+
+                # Propagate inputs forward to compute outputs
+                self.predict(instance)
+
+                # Propagate deltas backward from output layer to input layer
+
+                ## Calculate deltas
+                for layer in reversed(range(self.layers)):
+
+                    # Compare to target
+                    if layer == self.layers - 1:
+                        diff = self.target(instance) - self.layerOut[layer] # target - calculated
+                        error = np.multiply(diff, dsigmoid(self.layerOut[layer])) # error terms for layer
+
+                    # Compare to delta from following layer
+                    else:
+                        diff = np.sum(np.multiply(error, self.weights[layer + 1].T).T, axis=0)
+                        error = np.multiply(diff, dsigmoid(biased(self.layerOut[layer]))) # error terms for layer
+
+                    out = instance.getFeature().arr() if layer == 0 else self.layerOut[layer-1]
+                    delta = np.outer(learningRate * error, biased(out))
+                    deltas.append(delta)
+
+
+                ## Calculate weight deltas
+                for layer in range(self.layers):
+                    dIndex = self.layers - 1 - layer
+                    if layer < self.layers - 1:
+                        self.weights[layer] += deltas[dIndex][:-1,:] #weightDelta
+                    else:
+                        self.weights[layer] += deltas[dIndex]
+
+
+    def predict(self, instance):
+
+        features = instance.length()
+
+        # Clear intermediates
+        self.layerIn = []
+        self.layerOut = []
+
+        # Iterate through the layers
+        for layer in range(self.layers):
+            out = instance.getFeature().arr() if layer == 0 else self.layerOut[-1]
+            layerIn = self.weights[layer].dot(biased(out)) # add bias node and dot with weight matrix
+            self.layerIn.append(layerIn)
+            self.layerOut.append(sigmoid(layerIn))
+
+        return self.classes[np.argmax(self.layerOut[-1])]
+
+def sigmoid(x):
+    return 1/(1+np.exp(-x))
+
+def dsigmoid(x):
+    return x*(1-x)
+
+def biased(arr):
+    return np.append(arr, 1)
