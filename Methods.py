@@ -262,55 +262,117 @@ class NeuralNetwork(Predictor):
         # Init small random weights
         for (l1, l2) in zip(shape[:-1], shape[1:]):
             self.weights.append(np.random.normal(scale = 0.1, size = (l2, l1+1))) # l1+1 for bias node
+        # self.weights = [np.matrix([[3.7, 3.7, -1.5], [2.9, 2.9, -4.6]]), np.matrix([[4.5, -5.2, -2.0]])]
 
 
-    def target(self, instance):
-        return self.targets[instance.getLabel()]
+    def target(self, instances):
+        return np.matrix([self.tprobs[self.targets[instance.getLabel()]] for instance in instances])
 
     def train(self, instances):
 
         deltas = []
         errors = []
-        features = self.shape[0]
+        # features = self.shape[0]
 
-        maxIter = 1000
+        maxIter = 10
         minErr = 0.01
         learningRate = 1
 
+        trainingSet = np.matrix([instance.getFeature().arr() for instance in instances]).T
+        print trainingSet
+        cases = trainingSet.shape[1]
+
         for itr in range(maxIter):
 
-            for instance in instances:
+            # if itr%100 == 0:
+            #     print itr
+            #     print self.weights
 
-                # Propagate inputs forward to compute outputs
-                self.predict(instance)
+            # Propagate inputs forward to compute outputs
+            self.predictParallel(trainingSet)
 
-                # Propagate deltas backward from output layer to input layer
+            # Propagate deltas backward from output layer to input layer
 
-                ## Calculate deltas
-                for layer in reversed(range(self.layers)):
+            ## Calculate deltas
+            for layer in reversed(range(self.layers)):
 
-                    # Compare to target
-                    if layer == self.layers - 1:
-                        diff = self.target(instance) - self.layerOut[layer] # target - calculated
-                        error = np.multiply(diff, dsigmoid(self.layerOut[layer])) # error terms for layer
+                # Compare to target
+                if layer == self.layers - 1:
+                    diff = self.target(instances).T - self.layerOut[layer]
+                    deltas.append(np.multiply(diff, dsigmoid(self.layerOut[layer])))
 
-                    # Compare to delta from following layer
-                    else:
-                        diff = np.sum(np.multiply(error, self.weights[layer + 1].T).T, axis=0)
-                        error = np.multiply(diff, dsigmoid(biased(self.layerOut[layer]))) # error terms for layer
-
-                    out = instance.getFeature().arr() if layer == 0 else self.layerOut[layer-1]
-                    delta = np.outer(learningRate * error, biased(out))
-                    deltas.append(delta)
+                else:
+                    deltaProp = self.weights[layer + 1].T.dot(deltas[-1])
+                    deltas.append(np.multiply(deltaProp[:-1,:], dsigmoid(self.layerOut[layer])))
 
 
-                ## Calculate weight deltas
-                for layer in range(self.layers):
-                    dIndex = self.layers - 1 - layer
-                    if layer < self.layers - 1:
-                        self.weights[layer] += deltas[dIndex][:-1,:] #weightDelta
-                    else:
-                        self.weights[layer] += deltas[dIndex]
+            for layer in range(self.layers):
+
+                dIndex = self.layers - 1 - layer
+
+                if layer == 0:
+                    layerOut = np.vstack([trainingSet, np.ones([1, cases])])
+
+                else:
+                    layerOut = np.vstack([self.layerOut[layer - 1], np.ones([1, self.layerOut[layer - 1].shape[1]])])
+
+                deltaw = np.array([np.outer(layerOut[:,i], deltas[dIndex][:,i]).T for i in range(layerOut.shape[1])])
+                weightDelta = np.sum(deltaw, axis = 0)
+                self.weights[layer] += learningRate * weightDelta
+                print self.weights[layer]
+
+        # print self.weights
+
+
+            # for instance in instances:
+
+            #     # Propagate inputs forward to compute outputs
+            #     self.predict(instance)
+
+            #     # Propagate deltas backward from output layer to input layer
+
+            #     ## Calculate deltas
+            #     for layer in reversed(range(self.layers)):
+
+            #         # Compare to target
+            #         if layer == self.layers - 1:
+            #             diff = self.target(instance) - self.layerOut[layer] # target - calculated
+            #             error = np.multiply(diff, dsigmoid(self.layerOut[layer])) # error terms for layer
+
+            #         # Compare to delta from following layer
+            #         else:
+            #             diff = np.sum(np.multiply(error, self.weights[layer + 1].T).T, axis=0)
+            #             error = np.multiply(diff, dsigmoid(biased(self.layerOut[layer]))) # error terms for layer
+
+            #         out = instance.getFeature().arr() if layer == 0 else self.layerOut[layer-1]
+            #         delta = np.outer(learningRate * error, biased(out))
+            #         deltas.append(delta)
+
+
+            #     ## Calculate weight deltas
+            #     for layer in range(self.layers):
+            #         dIndex = self.layers - 1 - layer
+            #         if layer < self.layers - 1:
+            #             self.weights[layer] += deltas[dIndex][:-1,:] #weightDelta
+            #         else:
+            #             self.weights[layer] += deltas[dIndex]
+
+
+    def predictParallel(self, trainingSet):
+
+        cases = trainingSet.shape[1]
+
+        self.layerIn = []
+        self.layerOut = []
+
+        for layer in range(self.layers):
+            if layer == 0:
+                layerIn = self.weights[0].dot(np.vstack([trainingSet, np.ones([1, cases])]))
+            else:
+                layerIn = self.weights[layer].dot(np.vstack([self.layerOut[-1], np.ones([1, cases])]))
+
+            self.layerIn.append(layerIn)
+            self.layerOut.append(sigmoid(layerIn))
 
 
     def predict(self, instance):
@@ -333,8 +395,8 @@ class NeuralNetwork(Predictor):
 def sigmoid(x):
     return 1/(1+np.exp(-x))
 
-def dsigmoid(x):
-    return x*(1-x)
+def dsigmoid(mat):
+    return np.multiply(mat, (1-mat))
 
 def biased(arr):
     return np.append(arr, 1)
