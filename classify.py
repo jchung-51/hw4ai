@@ -2,7 +2,6 @@ import os
 import argparse
 import sys
 import pickle
-import math
 from Methods import ClassificationLabel, FeatureVector, Instance, Predictor, DecisionTree, NaiveBayes, NeuralNetwork
 
 def load_data(filename):
@@ -90,7 +89,7 @@ def train(instances, labels, algorithm):
 	elif algorithm == "neural_network":
 		features = instances[0].length()
 		classes = len(labels)
-		shape = (features, math.ceil((features + classes)/2), classes)
+		shape = (features, features, classes)
 		predictor = NeuralNetwork(shape, labels)
 	predictor.train(instances)
 	return predictor

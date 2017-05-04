@@ -262,6 +262,8 @@ class NeuralNetwork(Predictor):
         # Init small random weights
         for (l1, l2) in zip(shape[:-1], shape[1:]):
             self.weights.append(np.random.uniform(-0.01, 0.01, (l2, l1+1))) # l1+1 for bias node
+            # self.weights.append(np.random.normal(scale = 0.1, size = (l2, l1+1))) # l1+1 for bias node
+
 
 
     def target(self, instance):
@@ -273,7 +275,7 @@ class NeuralNetwork(Predictor):
     def train(self, instances):
 
         epochs = 1000
-        learningRate = 10
+        learningRate = 1
         deltas = []
 
         trainingSet = np.matrix([instance.getFeature().arr() for instance in instances]).T
@@ -293,9 +295,7 @@ class NeuralNetwork(Predictor):
 
                 # Compare to target
                 if layer == self.layers - 1:
-                    # print self.targetMat(instances).T
                     diff = self.layerOut[layer] - trainingTargets
-                    # print np.average(np.multiply(diff, diff)*0.5)
                     deltas.append(np.multiply(diff, dsigmoid(self.layerOut[layer])))
 
                 # Compare to following layer
@@ -337,7 +337,6 @@ class NeuralNetwork(Predictor):
             layerIn = self.weights[layer].dot(np.vstack([(trainingSet if layer == 0 else self.layerOut[-1]), np.ones([1, cases])]))
             self.layerIn.append(layerIn)
             self.layerOut.append(sigmoid(layerIn))
-            # print self.layerOut[-1]
 
 
     def predict(self, instance):
@@ -354,8 +353,6 @@ class NeuralNetwork(Predictor):
             layerIn = self.weights[layer].dot(biased(out)) # add bias node and dot with weight matrix
             self.layerIn.append(layerIn)
             self.layerOut.append(sigmoid(layerIn))
-            # print self.layerIn[-1]
-            # print self.layerOut[-1]
 
         return self.classes[np.argmax(self.layerOut[-1])]
 
