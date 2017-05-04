@@ -45,6 +45,7 @@ def get_args():
 	parser.add_argument("--mode", type=str, required=True, choices=["train", "test"], help="Mode: train or test.")
 	parser.add_argument("--model-file", type=str, required=True, help="Filename specifying where to save or load model.")
 	parser.add_argument("--algorithm", type=str, help="The name of the algorithm for training.")
+	parser.add_argument("--gain", type=str, help="info gain")
 
 	args = parser.parse_args()
 	check_args(args)
@@ -74,7 +75,7 @@ def check_args(args):
 		if not os.path.exists(args.model_file):
 			raise Exception("model file specified by --model-file does not exist.")
 
-def train(instances, labels, algorithm):
+def train(instances, labels, algorithm, ratio):
 	"""
 	This is where you tell classify.py what algorithm to use for training
 	The actual code for training should be in the Predictor subclasses
@@ -84,7 +85,11 @@ def train(instances, labels, algorithm):
 		predictor = DecisionTree()
 	"""
 	if algorithm == "decision_tree":
-		predictor = DecisionTree()
+		if not ratio:
+			predictor = DecisionTree()
+		else:
+			print "gain"
+			predictor = DecisionTree(ratio)
 	elif algorithm == "naive_bayes":
 		predictor = NaiveBayes()
 	elif algorithm == "neural_network":
@@ -100,10 +105,12 @@ def main():
 	if args.mode.lower() == "train":
 		# Load training data.
 		instances, labels = load_data(args.data)
-
-		# Train
-		predictor = train(instances, labels, args.algorithm)
-		
+		predictor = None
+		if args.gain == "ratio":
+			predictor = train(instances, labels, args.algorithm, True)
+		else:
+			# Train
+			predictor = train(instances, labels, args.algorithm, None)
 		try:
 			with open(args.model_file, 'wb') as writer:
 				pickle.dump(predictor, writer)
