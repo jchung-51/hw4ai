@@ -272,10 +272,12 @@ class NeuralNetwork(Predictor):
 
     def train(self, instances):
 
-        epochs = 100
-        learningRate = 1
+        epochs = 1000
+        learningRate = 10
+        deltas = []
 
         trainingSet = np.matrix([instance.getFeature().arr() for instance in instances]).T
+        trainingTargets = self.targetMat(instances).T
         cases = trainingSet.shape[1]
 
         for epoch in range(epochs):
@@ -286,22 +288,25 @@ class NeuralNetwork(Predictor):
             # Propagate inputs forward to compute outputs
             self.predictParallel(trainingSet)
 
-            newWeights = self.weights
-
             # Propagate deltas backward from output layer to input layer
             for layer in reversed(range(self.layers)):
 
                 # Compare to target
                 if layer == self.layers - 1:
                     # print self.targetMat(instances).T
-                    diff = self.layerOut[layer] - self.targetMat(instances).T
-                    print np.average(np.multiply(diff, diff)*0.5)
-                    delta = np.multiply(diff, dsigmoid(self.layerOut[layer]))
+                    diff = self.layerOut[layer] - trainingTargets
+                    # print np.average(np.multiply(diff, diff)*0.5)
+                    deltas.append(np.multiply(diff, dsigmoid(self.layerOut[layer])))
 
                 # Compare to following layer
                 else:
-                    deltaProp = self.weights[layer + 1].T.dot(delta)
-                    delta = np.multiply(deltaProp[:-1,:], dsigmoid(self.layerOut[layer]))
+                    deltaProp = self.weights[layer + 1].T.dot(deltas[-1])
+                    deltas.append(np.multiply(deltaProp[:-1,:], dsigmoid(self.layerOut[layer])))
+
+
+            for layer in range(self.layers):
+
+                deltaIndex = self.layers - 1 - layer
 
                 # Get nodes for a layer as an array of column vectors
                 if layer == 0:
@@ -310,16 +315,15 @@ class NeuralNetwork(Predictor):
                     prevLayer = np.vstack([self.layerOut[layer - 1], np.ones([1, self.layerOut[layer - 1].shape[1]])])
 
                 # Get change in weight for each test case as an array of weight matrices
-                weightDeltas = np.array([np.outer(prevLayer[:,i], delta[:,i]).T for i in range(prevLayer.shape[1])])
+                weightDeltas = np.multiply(np.expand_dims(prevLayer, 0).transpose(2,0,1), np.expand_dims(deltas[deltaIndex], 0).transpose(2,1,0))
 
                 # Flatten the 3D weight matrix into 2D by summing element-wise to get overall change in weight
                 weightDelta = np.sum(weightDeltas, axis = 0)
 
                 # Add weight deltas to weights for this layer
-                newWeights[layer] += learningRate * weightDelta
+                self.weights[layer] -= learningRate * weightDelta
 
-            self.weights = newWeights
-
+            deltas = []
 
 
     def predictParallel(self, trainingSet):
