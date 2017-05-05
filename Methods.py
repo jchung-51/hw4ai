@@ -88,24 +88,29 @@ include methods called train() and predict() in your subclasses
 
 class DecisionTree(Predictor):
     
-    def __init__(self):
+    def __init__(self, ratio = False):
         self.tree = {}
         self.labels = set()
+        self.ratio = ratio
+        
         
     def getTree(self):
         return self.tree
       
     # TRAIN  
-    def train(self, instances): 
+    def train(self, instances,): 
         instances_copy = instances[:]
         attributes = list(range(instances[0].length()))
         default = self.default(instances)
-        self.tree = self.dtl(instances_copy, attributes)
+        if not self.ratio:
+            self.tree = self.dtl(instances_copy, attributes)
+        else:
+            self.tree = self.dtl(instances_copy, attributes, True)
         print self.labels
         #print self.labels
         #print self.tree
     
-    def dtl(self, data, attr):
+    def dtl(self, data, attr, ratio = False):
         most, counter, counter[most] = self.default(data)
         #print most, counter[most]
         if len(data) == 0:
@@ -116,8 +121,8 @@ class DecisionTree(Predictor):
         elif len(attr) - 1 <= 0:
             return most
         else:
-            best = self.choose_attribute(attr, data)
-            print best
+            best = self.choose_attribute(attr, data, ratio)
+            #print best
             tree = {best:{}}
             #print best,self.get_val(data, best)
             for val in self.get_val(data, best):
@@ -126,7 +131,10 @@ class DecisionTree(Predictor):
                 attr_copy = list(attr)
                 attr_copy.remove(best)
                 #print attr, best , attr_copy
-                subtree = self.dtl(ex, attr_copy)
+                if ratio:
+                    subtree = self.dtl(ex, attr_copy, True)
+                else:
+                    subtree = self.dtl(ex, attr_copy)
                 tree[best][val] = subtree
             return tree
         
@@ -137,11 +145,14 @@ class DecisionTree(Predictor):
                 exs.append(entry)
         return exs
         
-    def choose_attribute(self, attrs, data):
+    def choose_attribute(self, attrs, data, ratio = False):
         best = None
         best_val = 0.0
         for attr in attrs:
-            x = self.gain(data, attrs, attr)
+            if ratio:
+                x = self.gain(data, attrs, attr, True)
+            else:
+                x = self.gain(data, attrs, attr)
             if x > best_val:
                 best_val = x
                 best = attr
@@ -170,7 +181,9 @@ class DecisionTree(Predictor):
             
         return entropy
     
-    def gain(self, data, attrs, attr):
+    
+    
+    def gain(self, data, attrs, attr, ratio = False):
         vals = {}
         entropy = 0.0
     
@@ -187,10 +200,17 @@ class DecisionTree(Predictor):
             subset = [entry for entry in data if entry.getFeature().get(attr) == val]
             entropy += prob * self.entropy(subset, attr)
     
+        if ratio:
+            minV = min(vals.keys())
+            maxV = max(vals.keys())
+            if maxV == minV:
+                return (self.entropy(data, attr) - entropy)
+            else:
+                return (self.entropy(data, attr) - entropy) / (maxV - minV)
+                
         # Subtract the entropy of the chosen attribute from the entropy of the
         # whole data set with respect to the target attribute (and return it)
         return (self.entropy(data, attr) - entropy)
-        
 
     def default(self,instances):
         counter = {}
@@ -226,14 +246,80 @@ class DecisionTree(Predictor):
         if instance_val not in vals:
             return None
         return self.test(vals[instance_val], instance)
-    
 
 class NaiveBayes(Predictor):
 
     def __init__(self):
-        return
-
-
+        self.classification = {}
+      
+    # TRAIN  
+    def train(self, instances): 
+        self.classification = self.results(instances)
+        return self.classification
+        #print self.tree
+    
+    def separate(self,instances):
+        classification = {}
+        for instance in instances:
+            if instance.getLabel() not in classification:
+                classification[instance.getLabel()] = list()
+            #print instance.getFeature()
+            classification[instance.getLabel()].append((instance.getFeature().arr()))
+            #print classification
+        return classification
+    
+    def mean(self,feature):
+        return sum(feature)/float(len(feature))
+    
+    def stdev(self,feature):
+        avg = self.mean(feature)
+        variance = sum([pow(x-avg,2) for x in feature])/float(len(feature)-1)
+        return math.sqrt(variance)
+    
+    def calculate(self, features):
+        result = [(self.mean(attr), self.stdev(attr)) for attr in zip(*features)]
+        return result
+    
+    def results(self,instances):
+        classification = self.separate(instances)
+        results = {}
+        for label in classification:
+            #print label
+            #print classification[label]
+            classification[label] = self.calculate(classification[label])
+        return classification
+    
+    def prob(self,x, mean, stdev):
+        e = math.exp(-(math.pow(x-mean,2)/(2*math.pow(stdev,2))))
+        return (1 / (math.sqrt(2*math.pi) * stdev)) * e
+    
+    def labelsProb(self, probs, feature):
+        probabilities = {}
+        #print probs
+        for label in probs:
+            #print label
+            probabilities[label] = 1
+            for i in range(len(probs[label])):
+                mean, stdev = probs[label][i]
+                x = feature.getFeature().get(i)
+                probabilities[label] *= self.prob(x, mean, stdev)
+        return probabilities
+    
+    def predict(self, instance):
+               
+    
+        return self.test(self.classification, instance)
+        
+    def test(self, probs, instance):
+        probabilities = self.labelsProb(probs, instance)
+        bestL, bestP = None, -1
+        for label, prob in probabilities.iteritems():
+            if label is None or prob > bestP:
+                bestP = prob
+                bestL = label
+        return bestL
+    
+    
 class NeuralNetwork(Predictor):
 
     def __init__(self, shape, classes):
