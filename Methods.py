@@ -276,7 +276,6 @@ class NeuralNetwork(Predictor):
 
         epochs = 1000
         learningRate = 1
-        deltas = []
 
         trainingSet = np.matrix([instance.getFeature().arr() for instance in instances]).T
         trainingTargets = self.targetMat(instances).T
@@ -286,6 +285,8 @@ class NeuralNetwork(Predictor):
 
             if epoch % 500 == 0:
                 print epoch
+
+            deltas = []
 
             # Propagate inputs forward to compute outputs
             self.predictParallel(trainingSet)
@@ -322,8 +323,6 @@ class NeuralNetwork(Predictor):
 
                 # Add weight deltas to weights for this layer
                 self.weights[layer] -= learningRate * weightDelta
-
-            deltas = []
 
 
     def predictParallel(self, trainingSet):
