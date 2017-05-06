@@ -330,10 +330,15 @@ class NeuralNetwork(Predictor):
         self.tprobs = []
         self.targets = dict()  # maps class to target probabilities
 
+        self.targetFraction = 0.3
+        self.targetLearningRate = 0.2
+        self.targetLearningRateReduction = 0.25
+        self.outputNorm = 0.02
+
         # Generate desired output for each class
         for index, c in enumerate(classes):
-            probs = np.ones(len(classes)) * 0.05
-            probs[index] = 0.95
+            probs = np.zeros(len(classes))
+            probs[index] = 1
             self.targets[c] = index
             self.tprobs.append(probs)
             self.classes.append(c)
@@ -360,8 +365,7 @@ class NeuralNetwork(Predictor):
 
     def train(self, instances):
 
-        epochs = 1000
-        learningRate = 1
+        epochs = 500
 
         trainingSet = np.matrix([instance.getFeature().arr() for instance in instances]).T
         trainingTargets = self.targetMat(instances).T
@@ -369,7 +373,8 @@ class NeuralNetwork(Predictor):
 
         for epoch in range(epochs):
 
-            if epoch % 500 == 0:
+            if epoch % int(self.targetFraction * epochs) == 0:
+                self.targetLearningRate *= self.targetLearningRateReduction
                 print epoch
 
             deltas = []
@@ -408,7 +413,7 @@ class NeuralNetwork(Predictor):
                 weightDelta = np.sum(weightDeltas, axis = 0)
 
                 # Add weight deltas to weights for this layer
-                self.weights[layer] -= learningRate * weightDelta
+                self.weights[layer] -= self.targetLearningRate * weightDelta
 
 
     def predictParallel(self, trainingSet):

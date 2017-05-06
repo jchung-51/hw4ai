@@ -1,7 +1,12 @@
 # Justin Chung jchung51
-# Ryan Demo 
+# Ryan Demo rdemo1
 # HW 4
 # Artificial Intelligence
+
+Algorithm types:
+decision_tree
+naive_bayes
+neural_network
 
 
 1. Decision Tree
@@ -31,10 +36,8 @@ Monks3              390/432
 
 3. Neural Network
 
-Files               
-
-House Votes
-Iris
-Monks1
-Monks2
-Monks3
+House Votes	79/87
+Iris		29/30
+Monks1		292/432
+Monks2		290/432
+Monks3		338/432
