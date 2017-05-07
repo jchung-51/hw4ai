@@ -3,6 +3,12 @@
 # HW 4
 # Artificial Intelligence
 
+
+### Notes
+
+Justin worked on the descision tree and the naive bayes implementations. Ryan worked on the neural network, trying a range of iterative and matrix-based implementations to find the best one. Our only lingering error is that our pruning does not work.
+
+
 Algorithm types:
 decision_tree
 naive_bayes
@@ -35,9 +41,12 @@ Monks2              228/432
 Monks3              390/432
 
 3. Neural Network
+We iterate over the number of epochs, but parallelize all of the operations for a set of training cases instead of using iteration. Using gradient descent, we update the learning rate as the epochs increase.
 
 House Votes	79/87
 Iris		29/30
 Monks1		292/432
 Monks2		290/432
 Monks3		338/432
+
+Evidently, a neural net works best on classification-type problems, specifically house votes (which it performed the best on) and iris (performed the best).
