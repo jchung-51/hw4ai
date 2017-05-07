@@ -1,0 +1,64 @@
+python classify.py --data data/house-votes-84.train --mode train --model-file house-votes-84.model --algorithm decision_tree
+python classify.py --data data/house-votes-84.test --mode test --model-file house-votes-84.model --algorithm decision_tree
+
+python classify.py --data data/house-votes-84.train --mode train --model-file house-votes-84-gainratio.model --algorithm decision_tree --gain ratio
+python classify.py --data data/house-votes-84.test --mode test --model-file house-votes-84-gainratio.model --algorithm decision_tree 
+
+python classify.py --data data/iris.train --mode train --model-file iris.model --algorithm decision_tree
+python classify.py --data data/iris.test --mode test --model-file iris.model --algorithm decision_tree
+
+python classify.py --data data/iris.train --mode train --model-file iris-gainratio.model --algorithm decision_tree --gain ratio
+python classify.py --data data/iris.test --mode test --model-file iris-gainratio.model --algorithm decision_tree
+
+python classify.py --data data/monks1.train --mode train --model-file monks1.model --algorithm decision_tree
+python classify.py --data data/monks1.test --mode test --model-file monks1.model --algorithm decision_tree
+
+python classify.py --data data/monks1.train --mode train --model-file monks1-gainratio.model --algorithm decision_tree --gain ratio
+python classify.py --data data/monks1.test --mode test --model-file monks1-gainratio.model --algorithm decision_tree
+
+python classify.py --data data/monks2.train --mode train --model-file monks2.model --algorithm decision_tree
+python classify.py --data data/monks2.test --mode test --model-file monks2.model --algorithm decision_tree
+
+python classify.py --data data/monks2.train --mode train --model-file monks2-gainratio.model --algorithm decision_tree --gain ratio
+python classify.py --data data/monks2.test --mode test --model-file monks2-gainratio.model --algorithm decision_tree
+
+python classify.py --data data/monks3.train --mode train --model-file monks3.model --algorithm decision_tree
+python classify.py --data data/monks3.test --mode test --model-file monks3.model --algorithm decision_tree
+
+python classify.py --data data/monks3.train --mode train --model-file monks3-gainratio.model --algorithm decision_tree --gain ratio
+python classify.py --data data/monks3.test --mode test --model-file monks3-gainratio.model --algorithm decision_tree
+
+
+
+python classify.py --data data/house-votes-84.train --mode train --model-file house-votes-84.model --algorithm naive_bayes
+python classify.py --data data/house-votes-84.test --mode test --model-file house-votes-84.model --algorithm naive_bayes
+
+python classify.py --data data/iris.train --mode train --model-file iris.model --algorithm naive_bayes
+python classify.py --data data/iris.test --mode test --model-file iris.model --algorithm naive_bayes
+
+python classify.py --data data/monks1.train --mode train --model-file monks1.model --algorithm naive_bayes
+python classify.py --data data/monks1.test --mode test --model-file monks1.model --algorithm naive_bayes
+
+python classify.py --data data/monks2.train --mode train --model-file monks2.model --algorithm naive_bayes
+python classify.py --data data/monks2.test --mode test --model-file monks2.model --algorithm naive_bayes
+
+python classify.py --data data/monks3.train --mode train --model-file monks3.model --algorithm naive_bayes
+python classify.py --data data/monks3.test --mode test --model-file monks3.model --algorithm naive_bayes
+
+
+
+
+python classify.py --data data/house-votes-84.train --mode train --model-file house-votes-84.model --algorithm neural_network
+python classify.py --data data/house-votes-84.test --mode test --model-file house-votes-84.model --algorithm neural_network
+
+python classify.py --data data/iris.train --mode train --model-file iris.model --algorithm neural_network
+python classify.py --data data/iris.test --mode test --model-file iris.model --algorithm neural_network
+
+python classify.py --data data/monks1.train --mode train --model-file monks1.model --algorithm neural_network
+python classify.py --data data/monks1.test --mode test --model-file monks1.model --algorithm neural_network
+
+python classify.py --data data/monks2.train --mode train --model-file monks2.model --algorithm neural_network
+python classify.py --data data/monks2.test --mode test --model-file monks2.model --algorithm neural_network
+
+python classify.py --data data/monks3.train --mode train --model-file monks3.model --algorithm neural_network
+python classify.py --data data/monks3.test --mode test --model-file monks3.model --algorithm neural_network
