@@ -106,7 +106,7 @@ class DecisionTree(Predictor):
             self.tree = self.dtl(instances_copy, attributes)
         else:
             self.tree = self.dtl(instances_copy, attributes, True)
-        print self.labels
+        # print self.labels
         #print self.labels
         #print self.tree
     
@@ -242,7 +242,7 @@ class DecisionTree(Predictor):
         attr = list(tree.keys())[0]
         vals = list(tree.values())[0]
         instance_val = instance.getFeature().get(attr)
-        print attr, instance_val
+        # print attr, instance_val
         if instance_val not in vals:
             return None
         return self.test(vals[instance_val], instance)
@@ -352,7 +352,9 @@ class NeuralNetwork(Predictor):
 
         # Init small random weights
         for (l1, l2) in zip(shape[:-1], shape[1:]):
-            self.weights.append(np.random.uniform(-0.01, 0.01, (l2, l1+1))) # l1+1 for bias node
+            alternateWeight = True
+            weightBound = 1/math.sqrt(l1+1) if alternateWeight else 0.01
+            self.weights.append(np.random.uniform(-weightBound, weightBound, (l2, l1+1))) # l1+1 for bias node
             # self.weights.append(np.random.normal(scale = 0.1, size = (l2, l1+1))) # l1+1 for bias node
 
 
@@ -375,7 +377,6 @@ class NeuralNetwork(Predictor):
 
             if epoch % int(self.targetFraction * epochs) == 0:
                 self.targetLearningRate *= self.targetLearningRateReduction
-                print epoch
 
             deltas = []
 

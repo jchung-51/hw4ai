@@ -51,9 +51,12 @@ def get_args():
 
 	return args
 
-def predict(predictor, instances):
+def predict(predictor, instances, args):
 	results = []
 	actual = []
+	labelsCorrect = dict()
+	predictionLabels = dict()
+	instanceLabels = dict()
 	correct = 0.0
 	total_count = len(instances)
 	for instance in instances:
@@ -62,8 +65,36 @@ def predict(predictor, instances):
 		results.append(label)
 		if (instance.getLabel() == label):
 			correct += 1.0
+			if not label in labelsCorrect:
+				labelsCorrect[label] = 1
+			else:
+				labelsCorrect[label] += 1
+
+		if not label in predictionLabels:
+			predictionLabels[label] = 1
+		else:
+			predictionLabels[label] += 1
+
+		if not instance.getLabel() in instanceLabels:
+			instanceLabels[instance.getLabel()] = 1
+		else:
+			instanceLabels[instance.getLabel()] += 1
+
 		print(instance.getLabel(), label)
-	print correct, total_count, correct / total_count
+
+	printAllStats = False
+
+	if printAllStats:
+		print args.algorithm.lower()
+		print args.model_file.lower().replace(".model", "")
+		print "Accuracy: ", str(correct / total_count), "\t\t", correct, "/", total_count
+		for label, numCorrect in labelsCorrect.iteritems():
+			print "Label", label, ":"
+			print "\tPrecision:", float(numCorrect) / predictionLabels[label], "\t", numCorrect, "/", predictionLabels[label]
+			print "\tRecall:   ", float(numCorrect) / instanceLabels[label], "\t", numCorrect, "/", instanceLabels[label]
+	else:
+		print correct, total_count, correct / total_count
+
 	return results
 
 def check_args(args):
@@ -132,7 +163,7 @@ def main():
 		except pickle.PickleError:
 			raise Exception("Exception while loading pickle.")
 
-		predict(predictor, instances)
+		predict(predictor, instances, args)
 	else:
 		raise Exception("Unrecognized mode.")
 
